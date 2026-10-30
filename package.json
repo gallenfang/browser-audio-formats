@@ -1,0 +1,10 @@
+{
+  "name": "browser-audio-formats",
+  "version": "0.1.0",
+  "description": "A small reference and probe for audio formats that browsers can decode natively.",
+  "main": "probe.js",
+  "bin": {
+    "browser-audio-formats": "./probe.js"
+  },
+  "license": "MIT"
+}
