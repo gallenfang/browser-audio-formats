@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const NEEDS_TRANSCODING = new Set([
-  "mp2", "mogg", "amr", "awb", "wma", "ac3", "eac3", "aifc", "caf", "au", "snd", "gsm",
+  "mp2", "mogg", "amr", "awb", "wma", "ac3", "eac3", "aifc", "caf", "au", "snd", "gsm", "bwf",
   "ra", "ram", "voc", "dss", "ds2", "dvf", "msv", "mkv", "avi", "flv", "m2ts", "mts", "ts",
   "3g2", "mpg", "mpeg", "mpegts",
 ]);
@@ -16,12 +16,17 @@ function extensionOf(file) {
   return ext === "mp4a" ? "m4a" : ext;
 }
 
-function collect(input) {
+function collect(input, displayInput, explicit = false) {
   const stat = fs.statSync(input);
   if (stat.isDirectory()) {
-    return fs.readdirSync(input, { withFileTypes: true }).flatMap((entry) => collect(path.join(input, entry.name)));
+    return fs.readdirSync(input, { withFileTypes: true }).flatMap((entry) => {
+      const childPath = path.join(input, entry.name);
+      const childDisplayPath = path.join(displayInput, entry.name);
+      if (entry.isFile() && extensionOf(entry.name) === "ts") return [{ skipped: true }];
+      return collect(childPath, childDisplayPath, false);
+    });
   }
-  return [input];
+  return [{ file: displayInput, explicit }];
 }
 
 function probe(file) {
@@ -42,10 +47,15 @@ if (inputs.length === 0) {
 }
 
 let failed = false;
+let skippedTs = 0;
 for (const input of inputs) {
   try {
-    for (const file of collect(path.resolve(input))) {
-      const result = probe(file);
+    for (const item of collect(path.resolve(input), input, true)) {
+      if (item.skipped) {
+        skippedTs += 1;
+        continue;
+      }
+      const result = probe(item.file);
       console.log(result.message);
       if (!result.ok) failed = true;
     }
@@ -53,6 +63,10 @@ for (const input of inputs) {
     failed = true;
     console.error(`${input}: cannot inspect (${error.message})`);
   }
+}
+
+if (skippedTs > 0) {
+  console.log(`skipped ${skippedTs} .ts file(s) - .ts is also TypeScript source; pass a .ts file explicitly to check it as MPEG-TS`);
 }
 
 process.exit(failed ? 1 : 0);

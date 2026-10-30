@@ -22,6 +22,7 @@ When an application accepts uploads, files such as `.amr`, `.wma`, and `.ra` can
 | au | Sun/NeXT audio | No — transcode first |
 | snd | Sounder audio | No — transcode first |
 | gsm | GSM audio | No — transcode first |
+| bwf | Broadcast Wave Format with broadcast metadata | No — transcode first |
 | ra | RealAudio | No — transcode first |
 | ram | RealAudio metadata file | No — transcode first |
 | voc | Creative Voice file | No — transcode first |
@@ -34,7 +35,7 @@ When an application accepts uploads, files such as `.amr`, `.wma`, and `.ra` can
 | flv | Flash video container | No — transcode first |
 | m2ts | MPEG-2 transport stream | No — transcode first |
 | mts | MTS video container | No — transcode first |
-| ts | MPEG transport stream | No — transcode first |
+| ts | MPEG transport stream (same extension as TypeScript) | No — transcode first |
 | 3g2 | 3GPP2 video container | No — transcode first |
 | mpg | MPEG video | No — transcode first |
 | mpeg | MPEG video | No — transcode first |
@@ -58,6 +59,15 @@ node probe.js recordings/ interview.amr meeting.wav
 
 Each file gets a conclusion and reason. The command exits `0` when every file is in the commonly decodable list, and `1` when a file needs transcoding, has an unknown extension, or cannot be inspected.
 
+### Sample output
+
+```text
+$ node probe.js recordings/ interview.amr meeting.wav
+recordings/call.wav: commonly browser-decodable (.wav)
+interview.amr: transcode first (.amr is in the browser-unrecognized list)
+meeting.wav: commonly browser-decodable (.wav)
+```
+
 ### Browser
 
 For a quick client-side check, ask the audio element what it thinks of a MIME type, then attempt an actual decode when you have an ArrayBuffer:
@@ -80,9 +90,20 @@ try {
 
 `canPlayType()` returning `"maybe"` does not mean the file will play. `decodeAudioData()` is the useful test for a particular file, although it is still subject to the codecs available in that browser and operating system. Browser and operating-system decoder support varies, so treat this list as a conservative upload-flow hint rather than a promise about every installation.
 
+`.ts` is also the TypeScript source extension, so directory scans skip it unless you pass the file explicitly.
+
 ## Background
 
 The list comes from the client-side format detection logic of a real, live audio transcription uploader. [ScribVoice](https://scribvoice.com) also supports additional verified audio and video formats through its upload flow.
+
+## Related format notes
+
+The formats above that most often need transcoding, and the pages that explain what
+each one means for upload:
+
+- [wav to text](https://scribvoice.com/wav-to-text)
+- [m4a to text](https://scribvoice.com/m4a-to-text)
+- [voice memo to text](https://scribvoice.com/voice-memo-to-text)
 
 ## License
 
